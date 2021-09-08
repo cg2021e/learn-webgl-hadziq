@@ -5,11 +5,14 @@ function main() {
 
     var vertexShaderSource = `
         void main() {
+            gl_PointSize = 10.0;
+            gl_Position = vec4(0.0, 0.0, 0.0, 1.0);     // Center of the coordinate
         }
     `;
 
     var fragmentShaderSource = `
         void main() {
+            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);    // Yellow
         }
     `;
 
@@ -38,4 +41,6 @@ function main() {
 
     gl.clearColor(0.1, 0.1, 0.1, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.drawArrays(gl.POINTS, 0, 1);
 }
