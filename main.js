@@ -11,9 +11,9 @@ function main() {
      */
 
     var vertices = [
-        -0.5, -0.5,     // Point A
-         0.5, -0.5,     // Point B
-         0.0,  0.5      // Point C
+        -0.5, -0.5, 0.0, 1.0, 0.0,     // Point A
+         0.5, -0.5, 0.0, 0.0, 1.0,     // Point B
+         0.0,  0.5, 1.0, 0.0, 0.0      // Point C
     ];
 
     // Create a linked-list for storing the vertices data
@@ -23,15 +23,20 @@ function main() {
 
     var vertexShaderSource = `
         attribute vec2 aPosition;
+        attribute vec3 aColor;
+        varying vec3 vColor;
         void main() {
             gl_PointSize = 10.0;
-            gl_Position = vec4(aPosition, 0.0, 1.0);     // Center of the coordinate
+            gl_Position = vec4(aPosition, 0.0, 1.0);
+            vColor = aColor;
         }
     `;
 
     var fragmentShaderSource = `
+        precision mediump float;
+        varying vec3 vColor;
         void main() {
-            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);    // Yellow
+            gl_FragColor = vec4(vColor, 1.0);    // Yellow
         }
     `;
 
@@ -67,10 +72,20 @@ function main() {
         2, 
         gl.FLOAT, 
         false, 
-        0, 
+        5 * Float32Array.BYTES_PER_ELEMENT, 
         0
     );
     gl.enableVertexAttribArray(aPosition);
+    var aColor = gl.getAttribLocation(shaderProgram, "aColor");
+    gl.vertexAttribPointer(
+        aColor, 
+        3, 
+        gl.FLOAT, 
+        false, 
+        5 * Float32Array.BYTES_PER_ELEMENT, 
+        2 * Float32Array.BYTES_PER_ELEMENT
+    );
+    gl.enableVertexAttribArray(aColor);
 
     gl.clearColor(0.1, 0.1, 0.1, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
