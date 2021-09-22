@@ -92,25 +92,19 @@ function main() {
     );
     gl.enableVertexAttribArray(aColor);
 
-    var framerate = 60; // 60 frames per second (fps)
-    var speedRaw = [3, 1];
-    var speed = [];
-    speed[0] = speedRaw[0] / framerate / 10;
-    speed[1] = speedRaw[1] / framerate / 10;
+    var speed = [3/600, 1/600];
     // Create a uniform to animate the vertices
     var uChange = gl.getUniformLocation(shaderProgram, "uChange");
     var change = [0, 0];
 
     function render() {
-        setTimeout(function (){
-            change[0] = change[0] + speed[0];
-            change[1] = change[1] + speed[1];
-            gl.uniform2fv(uChange, change);
-            gl.clearColor(0.1, 0.1, 0.1, 1.0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
-            render();
-        }, 1000/framerate);
+        change[0] = change[0] + speed[0];
+        change[1] = change[1] + speed[1];
+        gl.uniform2fv(uChange, change);
+        gl.clearColor(0.1, 0.1, 0.1, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        requestAnimationFrame(render);
     }
-    render();
+    requestAnimationFrame(render);
 }
