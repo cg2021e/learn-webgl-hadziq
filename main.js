@@ -8,7 +8,7 @@ function main() {
      * A ( -0.5, -0.5 )
      * B (  0.5, -0.5 )
      * C (  0.5,  0.5 )
-     * C ( -0.5,  0.5 )
+     * D ( -0.5,  0.5 )
      */
 
     var vertices = [
@@ -29,9 +29,10 @@ function main() {
         attribute vec2 aPosition;
         attribute vec3 aColor;
         varying vec3 vColor;
+        uniform vec2 uChange;
         void main() {
             gl_PointSize = 10.0;
-            gl_Position = vec4(aPosition, 0.0, 1.0);
+            gl_Position = vec4(aPosition + uChange, 0.0, 1.0);
             vColor = aColor;
         }
     `;
@@ -91,8 +92,18 @@ function main() {
     );
     gl.enableVertexAttribArray(aColor);
 
-    gl.clearColor(0.1, 0.1, 0.1, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    // Create a uniform to animate the vertices
+    var uChange = gl.getUniformLocation(shaderProgram, "uChange");
+    var changeX = 0;
+    var changeY = 0;
 
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    function render() {
+        changeX = changeX + 0.1;
+        changeY = changeY + 0.3;
+        gl.uniform2f(uChange, changeX, changeY);
+        gl.clearColor(0.1, 0.1, 0.1, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+    render();
 }
