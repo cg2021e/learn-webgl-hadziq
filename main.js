@@ -92,18 +92,27 @@ function main() {
     );
     gl.enableVertexAttribArray(aColor);
 
+    var freeze = false;
+    // Apply some interaction using mouse
+    function onMouseClick(event) {
+        freeze = !freeze;
+    }
+    document.addEventListener("click", onMouseClick, false);
+
     var speed = [3/600, 1/600];
     // Create a uniform to animate the vertices
     var uChange = gl.getUniformLocation(shaderProgram, "uChange");
     var change = [0, 0];
 
     function render() {
-        change[0] = change[0] + speed[0];
-        change[1] = change[1] + speed[1];
-        gl.uniform2fv(uChange, change);
-        gl.clearColor(0.1, 0.1, 0.1, 1.0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        if (!freeze) {
+            change[0] = change[0] + speed[0];
+            change[1] = change[1] + speed[1];
+            gl.uniform2fv(uChange, change);
+            gl.clearColor(0.1, 0.1, 0.1, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        }
         requestAnimationFrame(render);
     }
     requestAnimationFrame(render);
