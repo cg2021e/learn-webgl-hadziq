@@ -65,7 +65,7 @@ function main() {
         uniform mat4 uView;
         uniform mat4 uProjection;
         void main() {
-            gl_Position = uProjection * uView * uModel * (vec4(aPosition / 2.0, 1.0));
+            gl_Position = uProjection * uView * uModel * (vec4(aPosition * 2.0 / 3.0, 1.0));
             vColor = aColor;
         }
     `;
@@ -134,10 +134,10 @@ function main() {
     var projection = glMatrix.mat4.create();
     glMatrix.mat4.perspective(
         projection,
-        Math.PI / 3,
-        1,
-        0.5,
-        10
+        Math.PI / 3,    // field of view
+        1,              // ratio
+        0.5,            // near clip
+        10              // far clip
     );
     gl.uniformMatrix4fv(uProjection, false, projection);
 
@@ -145,9 +145,9 @@ function main() {
     var view = glMatrix.mat4.create();
     glMatrix.mat4.lookAt(
         view,
-        [0, 0, 3],
-        [0, 0, 0],
-        [0, 1, 0]
+        [0, 0, 3],      // camera position
+        [0, 0, 0],      // the point where camera looks at
+        [0, 1, 0]       // up vector of the camera
     );
     gl.uniformMatrix4fv(uView, false, view);
 
