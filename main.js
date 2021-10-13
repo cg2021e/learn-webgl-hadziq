@@ -99,13 +99,15 @@ function main() {
     }
     document.addEventListener("click", onMouseClick, false);
 
-    var speed = [3/600, 1/600];
+    var speed = [3/600, 2/600];
     // Create a uniform to animate the vertices
     var uChange = gl.getUniformLocation(shaderProgram, "uChange");
     var change = [0, 0];
 
     function render() {
-        if (!freeze) {
+        if (!freeze) { // If it is not freezing, then animate the rectangle
+            if (change[0] >= 0.5 || change[0] <= -0.5) speed[0] = -speed[0];
+            if (change[1] >= 0.5 || change[1] <= -0.5) speed[1] = -speed[1];
             change[0] = change[0] + speed[0];
             change[1] = change[1] + speed[1];
             gl.uniform2fv(uChange, change);
