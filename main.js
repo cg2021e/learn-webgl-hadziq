@@ -157,6 +157,15 @@ function main() {
         freeze = !freeze;
     }
     document.addEventListener("click", onMouseClick, false);
+    // Apply some interaction using keyboard
+    function onKeydown(event) {
+        if (event.keyCode == 32) freeze = true;
+    }
+    function onKeyup(event) {
+        if (event.keyCode == 32) freeze = false;
+    }
+    document.addEventListener("keydown", onKeydown, false);
+    document.addEventListener("keyup", onKeyup, false);
 
     var speed = [3/600, 2/600, 0];
     var change = [0, 0, 0];
