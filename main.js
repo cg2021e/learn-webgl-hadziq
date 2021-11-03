@@ -73,8 +73,12 @@ function main() {
     var fragmentShaderSource = `
         precision mediump float;
         varying vec3 vColor;
+        uniform vec3 uAmbientConstant; // It represents the light color
+        uniform float uAmbientIntensity; // It represents the light intensity
         void main() {
-            gl_FragColor = vec4(vColor, 1.0);
+            vec3 ambient = uAmbientConstant * uAmbientIntensity;
+            vec3 phong = ambient; // + diffuse + specular;
+            gl_FragColor = vec4(phong * vColor, 1.0);
         }
     `;
 
@@ -124,6 +128,12 @@ function main() {
         3 * Float32Array.BYTES_PER_ELEMENT
     );
     gl.enableVertexAttribArray(aColor);
+
+    // Define the lighting and shading
+    var uAmbientConstant = gl.getUniformLocation(shaderProgram, "uAmbientConstant");
+    var uAmbientIntensity = gl.getUniformLocation(shaderProgram, "uAmbientIntensity");
+    gl.uniform3fv(uAmbientConstant, [1.0, 0.5, 1.0]);   // orange light
+    gl.uniform1f(uAmbientIntensity, 0.4) // light intensity: 40%
 
     // Connect the uniform transformation matrices
     var uModel = gl.getUniformLocation(shaderProgram, "uModel");
