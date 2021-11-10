@@ -6,36 +6,36 @@ function main() {
     // Define vertices data consisting of position and color properties
 
     var vertices = [
-        // Face A       // Red
-        -1, -1, -1,     1, 0, 0,    // Index:  0    
-         1, -1, -1,     1, 0, 0,    // Index:  1
-         1,  1, -1,     1, 0, 0,    // Index:  2
-        -1,  1, -1,     1, 0, 0,    // Index:  3
+        // Face A       // Red      // Surface orientation (normal vector)
+        -1, -1, -1,     1, 0, 0,    0, 0, -1,   // Index:  0    
+         1, -1, -1,     1, 0, 0,    0, 0, -1,   // Index:  1
+         1,  1, -1,     1, 0, 0,    0, 0, -1,   // Index:  2
+        -1,  1, -1,     1, 0, 0,    0, 0, -1,   // Index:  3
         // Face B       // Yellow
-        -1, -1,  1,     1, 1, 0,    // Index:  4
-         1, -1,  1,     1, 1, 0,    // Index:  5
-         1,  1,  1,     1, 1, 0,    // Index:  6
-        -1,  1,  1,     1, 1, 0,    // Index:  7
+        -1, -1,  1,     1, 1, 0,    0, 0, 1,    // Index:  4
+         1, -1,  1,     1, 1, 0,    0, 0, 1,    // Index:  5
+         1,  1,  1,     1, 1, 0,    0, 0, 1,    // Index:  6
+        -1,  1,  1,     1, 1, 0,    0, 0, 1,    // Index:  7
         // Face C       // Green
-        -1, -1, -1,     0, 1, 0,    // Index:  8
-        -1,  1, -1,     0, 1, 0,    // Index:  9
-        -1,  1,  1,     0, 1, 0,    // Index: 10
-        -1, -1,  1,     0, 1, 0,    // Index: 11
+        -1, -1, -1,     0, 1, 0,    -1, 0, 0,   // Index:  8
+        -1,  1, -1,     0, 1, 0,    -1, 0, 0,   // Index:  9
+        -1,  1,  1,     0, 1, 0,    -1, 0, 0,   // Index: 10
+        -1, -1,  1,     0, 1, 0,    -1, 0, 0,   // Index: 11
         // Face D       // Blue
-         1, -1, -1,     0, 0, 1,    // Index: 12
-         1,  1, -1,     0, 0, 1,    // Index: 13
-         1,  1,  1,     0, 0, 1,    // Index: 14
-         1, -1,  1,     0, 0, 1,    // Index: 15
+         1, -1, -1,     0, 0, 1,    1, 0, 0,    // Index: 12
+         1,  1, -1,     0, 0, 1,    1, 0, 0,    // Index: 13
+         1,  1,  1,     0, 0, 1,    1, 0, 0,    // Index: 14
+         1, -1,  1,     0, 0, 1,    1, 0, 0,    // Index: 15
         // Face E       // Orange
-        -1, -1, -1,     1, 0.5, 0,  // Index: 16
-        -1, -1,  1,     1, 0.5, 0,  // Index: 17
-         1, -1,  1,     1, 0.5, 0,  // Index: 18
-         1, -1, -1,     1, 0.5, 0,  // Index: 19
+        -1, -1, -1,     1, 0.5, 0,  0, -1, 0,   // Index: 16
+        -1, -1,  1,     1, 0.5, 0,  0, -1, 0,   // Index: 17
+         1, -1,  1,     1, 0.5, 0,  0, -1, 0,   // Index: 18
+         1, -1, -1,     1, 0.5, 0,  0, -1, 0,   // Index: 19
         // Face F       // White
-        -1,  1, -1,     1, 1, 1,    // Index: 20
-        -1,  1,  1,     1, 1, 1,    // Index: 21
-         1,  1,  1,     1, 1, 1,    // Index: 22
-         1,  1, -1,     1, 1, 1     // Index: 23
+        -1,  1, -1,     1, 1, 1,    0, 1, 0,    // Index: 20
+        -1,  1,  1,     1, 1, 1,    0, 1, 0,    // Index: 21
+         1,  1,  1,     1, 1, 1,    0, 1, 0,    // Index: 22
+         1,  1, -1,     1, 1, 1,    0, 1, 0     // Index: 23
     ];
 
     var indices = [
@@ -60,25 +60,39 @@ function main() {
     var vertexShaderSource = `
         attribute vec3 aPosition;
         attribute vec3 aColor;
+        attribute vec3 aNormal;
         varying vec3 vColor;
+        varying vec3 vNormal;
         uniform mat4 uModel;
         uniform mat4 uView;
         uniform mat4 uProjection;
         void main() {
-            gl_Position = uProjection * uView * uModel * (vec4(aPosition * 2.0 / 3.0, 1.0));
+            gl_Position = uProjection * uView * uModel * (vec4(aPosition * 2. / 3., 1.));
             vColor = aColor;
+            vNormal = aNormal;
         }
     `;
 
     var fragmentShaderSource = `
         precision mediump float;
         varying vec3 vColor;
-        uniform vec3 uAmbientConstant; // It represents the light color
-        uniform float uAmbientIntensity; // It represents the light intensity
+        varying vec3 vNormal;
+        uniform vec3 uLightConstant;        // It represents the light color
+        uniform float uAmbientIntensity;    // It represents the light intensity
+        uniform vec3 uLightDirection;
+        uniform mat3 uNormalModel;
         void main() {
-            vec3 ambient = uAmbientConstant * uAmbientIntensity;
-            vec3 phong = ambient; // + diffuse + specular;
-            gl_FragColor = vec4(phong * vColor, 1.0);
+            vec3 ambient = uLightConstant * uAmbientIntensity;
+            vec3 normalizedLight = normalize(uLightDirection);  // [2., 0., 0.] becomes a unit vector [1., 0., 0.]
+            vec3 normalizedNormal = normalize(uNormalModel * vNormal);
+            float cosTheta = dot(normalizedNormal, normalizedLight);
+            vec3 diffuse = vec3(0., 0., 0.);
+            if (cosTheta > 0.) {
+                float diffuseIntensity = cosTheta;
+                diffuse = uLightConstant * diffuseIntensity;
+            }
+            vec3 phong = ambient + diffuse; // + specular;
+            gl_FragColor = vec4(phong * vColor, 1.);
         }
     `;
 
@@ -114,7 +128,7 @@ function main() {
         3, 
         gl.FLOAT, 
         false, 
-        6 * Float32Array.BYTES_PER_ELEMENT, 
+        9 * Float32Array.BYTES_PER_ELEMENT, 
         0
     );
     gl.enableVertexAttribArray(aPosition);
@@ -124,16 +138,29 @@ function main() {
         3, 
         gl.FLOAT, 
         false, 
-        6 * Float32Array.BYTES_PER_ELEMENT, 
+        9 * Float32Array.BYTES_PER_ELEMENT, 
         3 * Float32Array.BYTES_PER_ELEMENT
     );
     gl.enableVertexAttribArray(aColor);
+    var aNormal = gl.getAttribLocation(shaderProgram, "aNormal");
+    gl.vertexAttribPointer(
+        aNormal, 
+        3, 
+        gl.FLOAT, 
+        false, 
+        9 * Float32Array.BYTES_PER_ELEMENT, 
+        6 * Float32Array.BYTES_PER_ELEMENT
+    );
+    gl.enableVertexAttribArray(aNormal);
 
     // Define the lighting and shading
-    var uAmbientConstant = gl.getUniformLocation(shaderProgram, "uAmbientConstant");
+    var uLightConstant = gl.getUniformLocation(shaderProgram, "uLightConstant");
     var uAmbientIntensity = gl.getUniformLocation(shaderProgram, "uAmbientIntensity");
-    gl.uniform3fv(uAmbientConstant, [1.0, 0.5, 1.0]);   // orange light
+    gl.uniform3fv(uLightConstant, [1.0, 0.5, 1.0]);   // orange light
     gl.uniform1f(uAmbientIntensity, 0.4) // light intensity: 40%
+    var uLightDirection = gl.getUniformLocation(shaderProgram, "uLightDirection");
+    gl.uniform3fv(uLightDirection, [2.0, 0.0, 0.0]);    // light comes from the right side
+    var uNormalModel = gl.getUniformLocation(shaderProgram, "uNormalModel");
 
     // Connect the uniform transformation matrices
     var uModel = gl.getUniformLocation(shaderProgram, "uModel");
@@ -196,6 +223,10 @@ function main() {
             glMatrix.mat4.translate(model, model, change);
             // Set the model matrix in the vertex shader
             gl.uniformMatrix4fv(uModel, false, model);
+            // Set the model matrix for normal vector
+            var normalModel = glMatrix.mat3.create();
+            glMatrix.mat3.normalFromMat4(normalModel, model);
+            gl.uniformMatrix3fv(uNormalModel, false, normalModel);
             // Reset the frame buffer
             gl.enable(gl.DEPTH_TEST);
             gl.clearColor(0.1, 0.1, 0.1, 1.0);
