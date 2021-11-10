@@ -98,9 +98,9 @@ function main() {
                 float diffuseIntensity = cosTheta;
                 diffuse = uLightConstant * diffuseIntensity;
             }
-            vec3 reflector = reflect(lightDirection, normalizedNormal);
+            vec3 reflector = reflect(-lightDirection, normalizedNormal);
             vec3 normalizedReflector = normalize(reflector);
-            vec3 normalizedViewer = normalize(uViewerPosition);
+            vec3 normalizedViewer = normalize(uViewerPosition - vPosition);
             float cosPhi = dot(normalizedReflector, normalizedViewer);
             vec3 specular = vec3(0., 0., 0.);
             if (cosPhi > 0.) {
