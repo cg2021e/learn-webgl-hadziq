@@ -210,12 +210,48 @@ function main() {
     var uViewerPosition = gl.getUniformLocation(shaderProgram, "uViewerPosition");
     gl.uniform3fv(uViewerPosition, camera);
 
-    var freeze = false;
     // Apply some interaction using mouse
-    function onMouseClick(event) {
-        freeze = !freeze;
+    var dragging, lastx, lasty, rotation = glMatrix.mat4.create();
+    function onMouseDown(event) {
+        var x = event.clientX;
+        var y = event.clientY;
+        var rect = event.target.getBoundingClientRect();
+        if (
+            rect.left <= x &&
+            rect.right >= x &&
+            rect.top <= y &&
+            rect.bottom >= y
+        ) {
+            dragging = true;
+            lastx = x;
+            lasty = y;
+        }
     }
-    document.addEventListener("click", onMouseClick, false);
+    function onMouseUp(event) {
+        dragging = false;
+    }
+    function onMouseMove(event) {
+        if (dragging) {
+            var x = event.clientX;
+            var y = event.clientY;
+            var xaxis = [1, 0, 0, 0];
+            var yaxis = [0, 1, 0, 0];
+            var inverseRotation = glMatrix.mat4.create();
+            glMatrix.mat4.invert(inverseRotation, rotation);
+            glMatrix.vec4.transformMat4(xaxis, xaxis, inverseRotation);
+            glMatrix.vec4.transformMat4(yaxis, yaxis, inverseRotation);
+            var dx = (x - lastx)/60;
+            var dy = (y - lasty)/60;
+            var radx = glMatrix.glMatrix.toRadian(dy);
+            var rady = glMatrix.glMatrix.toRadian(dx);
+            glMatrix.mat4.rotate(rotation, rotation, radx, xaxis);
+            glMatrix.mat4.rotate(rotation, rotation, rady, yaxis);
+        }
+    }
+    document.addEventListener("mousedown", onMouseDown, false);
+    document.addEventListener("mouseup", onMouseUp, false);
+    document.addEventListener("mousemove", onMouseMove, false);
+
     // Apply some interaction using keyboard
     function onKeydown(event) {
         if (event.keyCode == 32) freeze = true;
@@ -226,35 +262,20 @@ function main() {
     document.addEventListener("keydown", onKeydown, false);
     document.addEventListener("keyup", onKeyup, false);
 
-    var speed = [3/600, 2/600, 0];
-    var change = [0, 0, 0];
-
     function render() {
-        if (!freeze) { // If it is not freezing, then animate the rectangle
-            if (change[0] >= 0.5 || change[0] <= -0.5) speed[0] = -speed[0];
-            if (change[1] >= 0.5 || change[1] <= -0.5) speed[1] = -speed[1];
-            change[0] = change[0] + speed[0];
-            change[1] = change[1] + speed[1];
-            // Init the model matrix
-            var model = glMatrix.mat4.create();
-            // Define a rotation matrix about x axis and store it to the model matrix
-            glMatrix.mat4.rotate(model, model, change[0], [1, 0, 0]);
-            // Define a rotation matrix about y axis and store it to the model matrix
-            glMatrix.mat4.rotate(model, model, change[1], [0, 1, 0]);
-            // Define a translation matrix and store it to the model matrix
-            glMatrix.mat4.translate(model, model, change);
-            // Set the model matrix in the vertex shader
-            gl.uniformMatrix4fv(uModel, false, model);
-            // Set the model matrix for normal vector
-            var normalModel = glMatrix.mat3.create();
-            glMatrix.mat3.normalFromMat4(normalModel, model);
-            gl.uniformMatrix3fv(uNormalModel, false, normalModel);
-            // Reset the frame buffer
-            gl.enable(gl.DEPTH_TEST);
-            gl.clearColor(0.1, 0.1, 0.1, 1.0);
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
-        }
+        // Init the model matrix
+        var model = glMatrix.mat4.create();
+        glMatrix.mat4.multiply(model, model, rotation);
+        gl.uniformMatrix4fv(uModel, false, model);
+        // Set the model matrix for normal vector
+        var normalModel = glMatrix.mat3.create();
+        glMatrix.mat3.normalFromMat4(normalModel, model);
+        gl.uniformMatrix3fv(uNormalModel, false, normalModel);
+        // Reset the frame buffer
+        gl.enable(gl.DEPTH_TEST);
+        gl.clearColor(0.1, 0.1, 0.1, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
         requestAnimationFrame(render);
     }
     requestAnimationFrame(render);
