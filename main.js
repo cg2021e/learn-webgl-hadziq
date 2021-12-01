@@ -3,39 +3,60 @@ function main() {
     var canvas = document.getElementById('myCanvas');   // The paper
     var gl = canvas.getContext('webgl');                // The brush and the paints
 
-    // Define vertices data consisting of position and color properties
+    // For texture
+    var texture;
+    function initTextures(callback) {
+        texture = gl.createTexture();
+        var image = new Image();
+        image.onload = function() { loadTexture(image, callback);};
+        image.src = "txCrate.bmp";
+    }
+    function loadTexture(image, callback) {
+        // Flip the image's y axis
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+        // Bind the texture object to the target on GPU
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        // Set the texture parameters
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        // Set the texture image
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        callback();
+    }
 
+    // Define vertices data consisting of position and color properties
     var vertices = [
-        // Face A       // Red      // Surface orientation (normal vector)
-        -1, -1, -1,     1, 0, 0,    0, 0, -1,   // Index:  0    
-         1, -1, -1,     1, 0, 0,    0, 0, -1,   // Index:  1
-         1,  1, -1,     1, 0, 0,    0, 0, -1,   // Index:  2
-        -1,  1, -1,     1, 0, 0,    0, 0, -1,   // Index:  3
+        // Face A       // Texture Coordinate   // Surface orientation (normal vector)
+        -1, -1, -1,     0,0,                    0, 0, -1,   // Index:  0    
+         1, -1, -1,     1,0,                    0, 0, -1,   // Index:  1
+         1,  1, -1,     1,1,                    0, 0, -1,   // Index:  2
+        -1,  1, -1,     0,1,                    0, 0, -1,   // Index:  3
         // Face B       // Yellow
-        -1, -1,  1,     1, 1, 0,    0, 0, 1,    // Index:  4
-         1, -1,  1,     1, 1, 0,    0, 0, 1,    // Index:  5
-         1,  1,  1,     1, 1, 0,    0, 0, 1,    // Index:  6
-        -1,  1,  1,     1, 1, 0,    0, 0, 1,    // Index:  7
+        -1, -1,  1,     0,0,                    0, 0, 1,    // Index:  4
+         1, -1,  1,     1,0,                    0, 0, 1,    // Index:  5
+         1,  1,  1,     1,1,                    0, 0, 1,    // Index:  6
+        -1,  1,  1,     0,1,                    0, 0, 1,    // Index:  7
         // Face C       // Green
-        -1, -1, -1,     0, 1, 0,    -1, 0, 0,   // Index:  8
-        -1,  1, -1,     0, 1, 0,    -1, 0, 0,   // Index:  9
-        -1,  1,  1,     0, 1, 0,    -1, 0, 0,   // Index: 10
-        -1, -1,  1,     0, 1, 0,    -1, 0, 0,   // Index: 11
+        -1, -1, -1,     0,0,                    -1, 0, 0,   // Index:  8
+        -1,  1, -1,     1,0,                    -1, 0, 0,   // Index:  9
+        -1,  1,  1,     1,1,                    -1, 0, 0,   // Index: 10
+        -1, -1,  1,     0,1,                    -1, 0, 0,   // Index: 11
         // Face D       // Blue
-         1, -1, -1,     0, 0, 1,    1, 0, 0,    // Index: 12
-         1,  1, -1,     0, 0, 1,    1, 0, 0,    // Index: 13
-         1,  1,  1,     0, 0, 1,    1, 0, 0,    // Index: 14
-         1, -1,  1,     0, 0, 1,    1, 0, 0,    // Index: 15
+         1, -1, -1,     0,0,                    1, 0, 0,    // Index: 12
+         1,  1, -1,     1,0,                    1, 0, 0,    // Index: 13
+         1,  1,  1,     1,1,                    1, 0, 0,    // Index: 14
+         1, -1,  1,     0,1,                    1, 0, 0,    // Index: 15
         // Face E       // Orange
-        -1, -1, -1,     1, 0.5, 0,  0, -1, 0,   // Index: 16
-        -1, -1,  1,     1, 0.5, 0,  0, -1, 0,   // Index: 17
-         1, -1,  1,     1, 0.5, 0,  0, -1, 0,   // Index: 18
-         1, -1, -1,     1, 0.5, 0,  0, -1, 0,   // Index: 19
+        -1, -1, -1,     0,0,                    0, -1, 0,   // Index: 16
+        -1, -1,  1,     0,1,                    0, -1, 0,   // Index: 17
+         1, -1,  1,     1,1,                    0, -1, 0,   // Index: 18
+         1, -1, -1,     1,0,                    0, -1, 0,   // Index: 19
         // Face F       // White
-        -1,  1, -1,     1, 1, 1,    0, 1, 0,    // Index: 20
-        -1,  1,  1,     1, 1, 1,    0, 1, 0,    // Index: 21
-         1,  1,  1,     1, 1, 1,    0, 1, 0,    // Index: 22
-         1,  1, -1,     1, 1, 1,    0, 1, 0     // Index: 23
+        -1,  1, -1,     0,0,                    0, 1, 0,    // Index: 20
+        -1,  1,  1,     0,1,                    0, 1, 0,    // Index: 21
+         1,  1,  1,     1,1,                    0, 1, 0,    // Index: 22
+         1,  1, -1,     1,0,                    0, 1, 0     // Index: 23
     ];
 
     var indices = [
@@ -59,9 +80,9 @@ function main() {
 
     var vertexShaderSource = `
         attribute vec3 aPosition;
-        attribute vec3 aColor;
+        attribute vec2 aTexCoord;
         attribute vec3 aNormal;
-        varying vec3 vColor;
+        varying vec2 vTexCoord;
         varying vec3 vNormal;
         varying vec3 vPosition;
         uniform mat4 uModel;
@@ -69,7 +90,7 @@ function main() {
         uniform mat4 uProjection;
         void main() {
             gl_Position = uProjection * uView * uModel * (vec4(aPosition * 2. / 3., 1.));
-            vColor = aColor;
+            vTexCoord = aTexCoord;
             vNormal = aNormal;
             vPosition = (uModel * (vec4(aPosition * 2. / 3., 1.))).xyz;
         }
@@ -77,7 +98,7 @@ function main() {
 
     var fragmentShaderSource = `
         precision mediump float;
-        varying vec3 vColor;
+        varying vec2 vTexCoord;
         varying vec3 vNormal;
         varying vec3 vPosition;
         uniform vec3 uLightConstant;        // It represents the light color
@@ -86,6 +107,7 @@ function main() {
         uniform vec3 uLightPosition;
         uniform mat3 uNormalModel;
         uniform vec3 uViewerPosition;
+        uniform sampler2D uSampler;
         void main() {
             vec3 ambient = uLightConstant * uAmbientIntensity;
             // vec3 lightDirection = uLightDirection;
@@ -109,7 +131,8 @@ function main() {
                 specular = uLightConstant * specularIntensity;
             }
             vec3 phong = ambient + diffuse + specular;
-            gl_FragColor = vec4(phong * vColor, 1.);
+            vec4 textureColor = texture2D(uSampler, vTexCoord);
+            gl_FragColor = vec4(phong, 1.) * textureColor;
         }
     `;
 
@@ -145,28 +168,28 @@ function main() {
         3, 
         gl.FLOAT, 
         false, 
-        9 * Float32Array.BYTES_PER_ELEMENT, 
+        8 * Float32Array.BYTES_PER_ELEMENT, 
         0
     );
     gl.enableVertexAttribArray(aPosition);
-    var aColor = gl.getAttribLocation(shaderProgram, "aColor");
+    var aTexCoord = gl.getAttribLocation(shaderProgram, "aTexCoord");
     gl.vertexAttribPointer(
-        aColor, 
-        3, 
+        aTexCoord, 
+        2, 
         gl.FLOAT, 
         false, 
-        9 * Float32Array.BYTES_PER_ELEMENT, 
+        8 * Float32Array.BYTES_PER_ELEMENT, 
         3 * Float32Array.BYTES_PER_ELEMENT
     );
-    gl.enableVertexAttribArray(aColor);
+    gl.enableVertexAttribArray(aTexCoord);
     var aNormal = gl.getAttribLocation(shaderProgram, "aNormal");
     gl.vertexAttribPointer(
         aNormal, 
         3, 
         gl.FLOAT, 
         false, 
-        9 * Float32Array.BYTES_PER_ELEMENT, 
-        6 * Float32Array.BYTES_PER_ELEMENT
+        8 * Float32Array.BYTES_PER_ELEMENT, 
+        5 * Float32Array.BYTES_PER_ELEMENT
     );
     gl.enableVertexAttribArray(aNormal);
 
@@ -200,7 +223,7 @@ function main() {
     // Define the lighting and shading
     var uLightConstant = gl.getUniformLocation(shaderProgram, "uLightConstant");
     var uAmbientIntensity = gl.getUniformLocation(shaderProgram, "uAmbientIntensity");
-    gl.uniform3fv(uLightConstant, [1.0, 0.5, 1.0]);   // orange light
+    gl.uniform3fv(uLightConstant, [1.0, 1.0, 1.0]);   // orange light
     gl.uniform1f(uAmbientIntensity, 0.4) // light intensity: 40%
     // var uLightDirection = gl.getUniformLocation(shaderProgram, "uLightDirection");
     // gl.uniform3fv(uLightDirection, [2.0, 0.0, 0.0]);    // light comes from the right side
@@ -291,6 +314,11 @@ function main() {
         var normalModel = glMatrix.mat3.create();
         glMatrix.mat3.normalFromMat4(normalModel, model);
         gl.uniformMatrix3fv(uNormalModel, false, normalModel);
+        // Texture
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        var uSampler = gl.getUniformLocation(shaderProgram, "uSampler");
+        gl.uniform1i(uSampler, 0);
         // Reset the frame buffer
         gl.enable(gl.DEPTH_TEST);
         gl.clearColor(0.1, 0.1, 0.1, 1.0);
@@ -298,5 +326,5 @@ function main() {
         gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
         requestAnimationFrame(render);
     }
-    requestAnimationFrame(render);
+    initTextures(render);
 }
