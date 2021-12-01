@@ -211,7 +211,34 @@ function main() {
     gl.uniform3fv(uViewerPosition, camera);
 
     // Apply some interaction using mouse
-    var dragging, lastx, lasty, rotation = glMatrix.mat4.create();
+    var lastPointOnTrackBall, currentPointOnTrackBall;
+    var lastQuat = glMatrix.quat.create();
+    function computeCurrentQuat() {
+        // Secara berkala hitung quaternion rotasi setiap ada perubahan posisi titik pointer mouse
+        var axisFromCrossProduct = glMatrix.vec3.cross(glMatrix.vec3.create(), lastPointOnTrackBall, currentPointOnTrackBall);
+        var angleFromDotProduct = Math.acos(glMatrix.vec3.dot(lastPointOnTrackBall, currentPointOnTrackBall));
+        var rotationQuat = glMatrix.quat.setAxisAngle(glMatrix.quat.create(), axisFromCrossProduct, angleFromDotProduct);
+        glMatrix.quat.normalize(rotationQuat, rotationQuat);
+        return glMatrix.quat.multiply(glMatrix.quat.create(), rotationQuat, lastQuat);
+    }
+    // Memproyeksikan pointer mouse agar jatuh ke permukaan ke virtual trackball
+    function getProjectionPointOnSurface(point) {
+        var radius = canvas.width/3;  // Jari-jari virtual trackball kita tentukan sebesar 1/3 lebar kanvas
+        var center = glMatrix.vec3.fromValues(canvas.width/2, canvas.height/2, 0);  // Titik tengah virtual trackball
+        var pointVector = glMatrix.vec3.subtract(glMatrix.vec3.create(), point, center);
+        pointVector[1] = pointVector[1] * (-1); // Flip nilai y, karena koordinat piksel makin ke bawah makin besar
+        var radius2 = radius * radius;
+        var length2 = pointVector[0] * pointVector[0] + pointVector[1] * pointVector[1];
+        if (length2 <= radius2) pointVector[2] = Math.sqrt(radius2 - length2); // Dapatkan nilai z melalui rumus Pytagoras
+        else {  // Atur nilai z sebagai 0, lalu x dan y sebagai paduan Pytagoras yang membentuk sisi miring sepanjang radius
+            pointVector[0] *= radius / Math.sqrt(length2);
+            pointVector[1] *= radius / Math.sqrt(length2);
+            pointVector[2] = 0;
+        }
+        return glMatrix.vec3.normalize(glMatrix.vec3.create(), pointVector);
+    }
+
+    var dragging, rotation = glMatrix.mat4.create();
     function onMouseDown(event) {
         var x = event.clientX;
         var y = event.clientY;
@@ -223,29 +250,22 @@ function main() {
             rect.bottom >= y
         ) {
             dragging = true;
-            lastx = x;
-            lasty = y;
         }
+        lastPointOnTrackBall = getProjectionPointOnSurface(glMatrix.vec3.fromValues(x, y, 0));
+        currentPointOnTrackBall = lastPointOnTrackBall;
     }
     function onMouseUp(event) {
         dragging = false;
+        if (currentPointOnTrackBall != lastPointOnTrackBall) {
+            lastQuat = computeCurrentQuat();
+        }
     }
     function onMouseMove(event) {
         if (dragging) {
             var x = event.clientX;
             var y = event.clientY;
-            var xaxis = [1, 0, 0, 0];
-            var yaxis = [0, 1, 0, 0];
-            var inverseRotation = glMatrix.mat4.create();
-            glMatrix.mat4.invert(inverseRotation, rotation);
-            glMatrix.vec4.transformMat4(xaxis, xaxis, inverseRotation);
-            glMatrix.vec4.transformMat4(yaxis, yaxis, inverseRotation);
-            var dx = (x - lastx)/60;
-            var dy = (y - lasty)/60;
-            var radx = glMatrix.glMatrix.toRadian(dy);
-            var rady = glMatrix.glMatrix.toRadian(dx);
-            glMatrix.mat4.rotate(rotation, rotation, radx, xaxis);
-            glMatrix.mat4.rotate(rotation, rotation, rady, yaxis);
+            currentPointOnTrackBall = getProjectionPointOnSurface(glMatrix.vec3.fromValues(x, y, 0));
+            glMatrix.mat4.fromQuat(rotation, computeCurrentQuat());
         }
     }
     document.addEventListener("mousedown", onMouseDown, false);
